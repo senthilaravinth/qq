@@ -3,42 +3,43 @@ pipeline {
 
     tools {
         // Must match the name in Manage Jenkins -> Tools
-        maven 'Maven'
+        maven 'Maven3'
     }
 
     stages {
-        stage('Initialize') {
-            steps {
-                bat "mvn -version"
-            }
-        }
-
         stage('Build & Test') {
             steps {
-                // This will compile your App.java and run AppTest.java
+                echo "Compiling and running Unit Tests..."
                 bat "mvn clean test"
             }
         }
 
         stage('Package') {
             steps {
-                // This creates the .jar file in the target folder
+                echo "Creating Executable JAR..."
                 bat "mvn package -DskipTests"
+                // List files so you can see the JAR name in your Jenkins logs
+                bat "dir target"
             }
         }
 
-        stage('Run Application') {
+        stage('Execute') {
             steps {
-                echo "Executing the Prime Number program..."
-                // Ensure this filename matches your pom.xml artifactId and version
-                bat "java -jar target/Primenumber-1.0-SNAPSHOT.jar"
+                echo "Running the Prime Number Application..."
+                /* This command finds the JAR in the target folder automatically 
+                   and runs it. This fixes the 'Unable to access jarfile' error.
+                */
+                bat "for /R target %%i in (*.jar) do java -jar %%i"
             }
         }
     }
 
     post {
+        success {
+            echo "Pipeline Successful!"
+        }
         failure {
-            echo "Build failed. Verify your Maven3 tool path in Jenkins settings."
+            echo "Pipeline Failed. Please verify the Maven3 tool path in Jenkins."
         }
     }
 }
