@@ -1,50 +1,47 @@
 pipeline {
     agent any
 
-    environment {
-        // UPDATE THIS PATH: Point it to the 'bin' folder of your local Maven installation
-        MAVEN_HOME = "C:\\apache-maven-3.9.6\\bin" 
-        // This ensures 'mvn' is available for the 'bat' commands below
-        PATH = "${MAVEN_HOME};${env.PATH}"
+    tools {
+        // This name must match the name you defined in Manage Jenkins -> Tools
+        maven 'Maven'
     }
 
     stages {
-        stage('Debug & Environment') {
+        stage('Environment Check') {
             steps {
-                echo "Checking Java and Maven versions..."
+                echo "Checking Java and Maven versions on the host machine..."
                 bat "java -version"
                 bat "mvn -version"
-                echo "Listing workspace files:"
-                bat "dir /s /b" // Lists all files in subfolders to verify src structure
             }
         }
 
         stage('Clean & Compile') {
             steps {
-                echo "Compiling the Prime Number application..."
+                echo "Cleaning previous builds and compiling source code..."
                 bat "mvn clean compile"
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Unit Testing') {
             steps {
-                echo "Executing JUnit Tests in src/test/java..."
-                // This will run the logic in AppTest.java
+                echo "Running JUnit tests..."
+                // This executes classes in src/test/java
                 bat "mvn test"
             }
         }
 
-        stage('Package JAR') {
+        stage('Package') {
             steps {
-                echo "Packaging application into a JAR file..."
-                bat "mvn package -DskipTests" 
+                echo "Creating the JAR file..."
+                // We skip tests here because they were verified in the previous stage
+                bat "mvn package -DskipTests"
             }
         }
 
-        stage('Run Native Application') {
+        stage('Execute Native') {
             steps {
-                echo "Running the final program directly on Windows..."
-                // Path matches: target/artifactId-version.jar
+                echo "Running the application natively (No Docker/K8s)..."
+                // Ensure the filename matches your pom.xml artifactId and version
                 bat "java -jar target/Primenumber-1.0-SNAPSHOT.jar"
             }
         }
@@ -52,10 +49,10 @@ pipeline {
 
     post {
         success {
-            echo "Successfully built, tested, and executed the Prime Number app!"
+            echo "Pipeline finished successfully!"
         }
         failure {
-            echo "Build Failed. Check if Maven path is correct or if a Unit Test failed."
+            echo "Pipeline failed. Check the 'Unit Testing' stage or Maven paths."
         }
     }
 }
